@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Страница для теста WTF From
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  {% if name %}
+  <h3>Привет, {{ name }}</h3>
+  {% else %}
+  <h3>Как тебя зовут ?</h3>
+  <br>
+  <form method="POST">
+    {{ form.hidden_tag() }}
+
+    {{ form.name.label(class="form-label") }}
+    {{ form.name(class="form-control") }}
+    <br>
+    {{ form.submit(class="btn btn-primary") }}
+
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
