@@ -6,6 +6,12 @@
 
 {% block content %}
 <div class="container py-5">
+  {% for message in get_flashed_messages() %}
+  <div class="alert alert-primary alert-dismissible fade show" role="alert">
+    Привет, {{ name }} - {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endfor %}
   {% if name %}
   <h3>Привет, {{ name }}</h3>
   {% else %}
