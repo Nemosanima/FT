@@ -6,7 +6,8 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from wtforms.widgets import TextArea
+from slugify import slugify
 
 # Create flask app
 app = Flask(__name__)
@@ -43,6 +44,21 @@ class User(db.Model):
 
     def __repr__(self):
         return '<Name %r>' % self.name
+
+
+# Post model
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    created = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# PostForm
+class PostForm(FlaskForm):
+    title = StringField('Заголовок', validators=[DataRequired()])
+    text = StringField('Текст', validators=[DataRequired()], widget=TextArea())
+    submit = SubmitField("Создать")
 
 
 # UserForm for model User
@@ -187,6 +203,25 @@ def data():
         'Stars': ['1EGT', '#YRE', 'GIT']
     }
     return dict_data
+
+
+# AddPost
+@app.route('/create/post', methods=['GET', 'POST'])
+def create_post():
+    form = PostForm()
+    if request.method == 'GET':
+        return render_template('app/create_post.html', form=form)
+    title = form.title.data
+    text = form.text.data
+    post = Post(title=title, text=text)
+    try:
+        db.session.add(post)
+        db.session.commit()
+        return redirect(url_for('index'))
+    except:
+        flash('Данные не валидны')
+        return render_template('app/create_post.html', form=form)
+
 
 
 
