@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash
+from flask import Flask, render_template, flash, request
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
@@ -7,8 +7,10 @@ from datetime import datetime
 
 # Create flask app
 app = Flask(__name__)
-# Add database
+# SQLite database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+# Postgres database
+# app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:postgres@localhost:5432/libertyhub"
 # Add secret key
 app.config['SECRET_KEY'] = "my super secret key that no one is supposed to know"
 # Создаем базу данных
@@ -81,6 +83,27 @@ def add_user():
     return render_template("users/add_user.html",
                            form=form,
                            users=users)
+
+
+@app.route('/user/<int:id>/update', methods=['GET', 'POST'])
+def update_user(id):
+    form = UserForm()
+    user = User.query.get_or_404(id)
+    if request.method == 'POST':
+        user.name = request.form.get('name')
+        user.email = request.form.get('email')
+        try:
+            db.session.commit()
+            flash('Данные пользователя обновлены')
+            return render_template('users/update_user.html', form=form, user=user)
+        except:
+            flash('Ошибка, попробуй снова')
+            return render_template('users/update_user.html', form=form, user=user)
+    else:
+        return render_template('users/update_user.html', form=form, user=user)
+
+
+
 
 
 if __name__ == "__main__":
