@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, request
+from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
@@ -110,7 +110,17 @@ def update_user(id):
         return render_template('users/update_user.html', form=form, user=user)
 
 
-
+@app.route('/user/<int:id>/delete')
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash('Пользователь удален')
+        return redirect(url_for('add_user'))
+    except:
+        flash('Ошибка, пользователь не удален')
+        return redirect(url_for('add_user'))
 
 
 if __name__ == "__main__":
