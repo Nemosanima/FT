@@ -177,7 +177,16 @@ def test_password():
         return render_template('app/test_password.html', form=form)
 
 
-
+# Json Api
+@app.route('/data')
+def data():
+    dict_data = {
+        'Harry': 'Potter',
+        'Tonny': 'Stark',
+        'Elon': 'Musk',
+        'Stars': ['1EGT', '#YRE', 'GIT']
+    }
+    return dict_data
 
 
 
