@@ -1,10 +1,11 @@
 from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Length
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # Create flask app
@@ -25,8 +26,20 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    created = db.Column(db.DateTime, default=datetime.utcnow)
     favorite_color = db.Column(db.String(50))
+    password_hash = db.Column(db.String(100), nullable=False)
+    created = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def password(self):
+        raise AttributeError('Получить пароль невозможно')
+
+    @password.setter
+    def password(self, value):
+        self.password_hash = generate_password_hash(value)
+
+    def verify_password(self, value):
+        return check_password_hash(self.password_hash, value)
 
     def __repr__(self):
         return '<Name %r>' % self.name
@@ -37,6 +50,13 @@ class UserForm(FlaskForm):
     name = StringField("Имя", validators=[DataRequired()])
     email = StringField("Почта", validators=[DataRequired()])
     favorite_color = StringField("Любимый цвет")
+    password_hash = PasswordField(
+        'Пароль',
+        validators=[DataRequired(), EqualTo('password_hash2', message='Пароли должны совпадать')]
+    )
+    password_hash2 = PasswordField(
+        'Повторите пароль', validators=[DataRequired()]
+    )
     submit = SubmitField("Отправить")
 
 
@@ -44,6 +64,14 @@ class UserForm(FlaskForm):
 class NamerForm(FlaskForm):
     name = StringField("Имя", validators=[DataRequired()])
     submit = SubmitField("Отправить")
+
+
+# Test PasswordForm
+class PasswordForm(FlaskForm):
+    email = StringField("Почта", validators=[DataRequired()])
+    password_hash = PasswordField("Пароль", validators=[DataRequired()])
+    submit = SubmitField("Отправить")
+
 
 
 @app.route('/')
@@ -78,12 +106,20 @@ def add_user():
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None:
-            user = User(name=form.name.data, email=form.email.data, favorite_color=form.favorite_color.data)
+            # Хешированный пароль
+            hashed_ps = generate_password_hash(form.password_hash.data)
+            user = User(
+                name=form.name.data,
+                email=form.email.data,
+                favorite_color=form.favorite_color.data,
+                password_hash=hashed_ps
+            )
             db.session.add(user)
             db.session.commit()
         form.name.data = ''
         form.email.data = ''
         form.favorite_color.data = ''
+        form.password_hash.data = ''
         flash('Пользователь добавлен в базу данных успешно')
     users = User.query.order_by(User.created)
     return render_template("users/add_user.html",
@@ -99,6 +135,7 @@ def update_user(id):
         user.name = request.form.get('name')
         user.email = request.form.get('email')
         user.favorite_color = request.form.get('favorite_color')
+        #user.password_hash = request.form.get('password_hash')
         try:
             db.session.commit()
             flash('Данные пользователя обновлены')
@@ -121,6 +158,27 @@ def delete_user(id):
     except:
         flash('Ошибка, пользователь не удален')
         return redirect(url_for('add_user'))
+
+
+@app.route('/test_password', methods=['GET', 'POST'])
+def test_password():
+    form = PasswordForm()
+    if request.method == 'GET':
+        return render_template('app/test_password.html', form=form)
+    email = request.form.get('email')
+    password = request.form.get('password_hash')
+    user = User.query.filter_by(email=email).first()
+    if user and check_password_hash(user.password_hash, password):
+        user_name = user.name
+        flash('Проверка пройдена', category='success')
+        return render_template('app/test_password.html', form=form, user_name=user_name)
+    else:
+        flash('Проверка не пройдена', category='error')
+        return render_template('app/test_password.html', form=form)
+
+
+
+
 
 
 if __name__ == "__main__":
