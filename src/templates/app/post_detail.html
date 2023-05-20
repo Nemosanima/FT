@@ -1,20 +1,19 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Главная страница
+ {{ post.title }}
 {% endblock %}
 
 {% block content %}
 <div class="container py-5">
-  <h3>Главная страница</h3>
-  {% for message in get_flashed_messages() %}
+  <h3>{{ post.title }}</h3>
+    {% for message in get_flashed_messages() %}
   <div class="alert alert-primary alert-dismissible fade show" role="alert">
     {{ message }}
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   {% endfor %}
 </div>
-{% for post in posts %}
 <div class="row justify-content-center">
   <div class="col-md-6 p-5">
     <div class="card">
@@ -22,16 +21,13 @@
         <div style="float: right">
           {{ post.created.date() }}
         </div>
-        <h4>
-          {{ post.title }}
-        </h4>
-        <p>
-          {{ post.text }}
-        </p>
-        <a href="{{ url_for('post_detail', id=post.id) }}" class="btn btn-primary">Детали</a>
+       <p>
+        {{ post.text }}
+       </p>
+        <a href="{{ url_for('edit_post', id=post.id ) }}" class="btn btn-primary">Редактировать</a>
+        <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-danger">Удалить</a>
       </div>
     </div>
   </div>
 </div>
-{% endfor %}
 {% endblock %}

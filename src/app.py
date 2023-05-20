@@ -58,7 +58,7 @@ class Post(db.Model):
 class PostForm(FlaskForm):
     title = StringField('Заголовок', validators=[DataRequired()])
     text = StringField('Текст', validators=[DataRequired()], widget=TextArea())
-    submit = SubmitField("Создать")
+    submit = SubmitField("Отправить")
 
 
 # UserForm for model User
@@ -89,10 +89,66 @@ class PasswordForm(FlaskForm):
     submit = SubmitField("Отправить")
 
 
-
 @app.route('/')
 def index():
-    return render_template("app/index.html")
+    posts = Post.query.order_by(Post.created.desc()).all()
+    return render_template("app/index.html", posts=posts)
+
+
+@app.route('/posts/<int:id>')
+def post_detail(id):
+    post = Post.query.get_or_404(id)
+    return render_template("app/post_detail.html", post=post)
+
+
+# AddPost
+@app.route('/create/post', methods=['GET', 'POST'])
+def create_post():
+    form = PostForm()
+    if request.method == 'GET':
+        return render_template('app/create_post.html', form=form)
+    title = form.title.data
+    text = form.text.data
+    post = Post(title=title, text=text)
+    try:
+        db.session.add(post)
+        db.session.commit()
+        flash('Пост успешно создан')
+        return redirect(url_for('index'))
+    except:
+        flash('Данные не валидны')
+        return render_template('app/create_post.html', form=form)
+
+
+# EditPost
+@app.route('/posts/<int:id>/edit', methods=['GET', 'POST'])
+def edit_post(id):
+    form = PostForm()
+    post = Post.query.get_or_404(id)
+    if request.method == 'GET':
+        return render_template('app/edit_post.html', form=form, post=post)
+    post.title = request.form["title"]
+    post.text = request.form["text"]
+    try:
+        flash('Пост успешно изменен')
+        db.session.commit()
+        return redirect(url_for("post_detail", id=post.id))
+    except:
+        flash('Данные не валидны')
+        return render_template("app/edit_post.html", form=form, post=post)
+
+# DeletePost
+@app.route("/posts/<int:id>/delete")
+def delete_post(id):
+    post = Post.query.get_or_404(id)
+    try:
+        db.session.delete(post)
+        db.session.commit()
+        flash('Пост успешно удален')
+        return redirect(url_for("index"))
+    except:
+        flash('Ошибка. Пост не был удален')
+        return redirect(url_for("post_detail", id=post.id))
 
 
 @app.errorhandler(404)
@@ -205,22 +261,7 @@ def data():
     return dict_data
 
 
-# AddPost
-@app.route('/create/post', methods=['GET', 'POST'])
-def create_post():
-    form = PostForm()
-    if request.method == 'GET':
-        return render_template('app/create_post.html', form=form)
-    title = form.title.data
-    text = form.text.data
-    post = Post(title=title, text=text)
-    try:
-        db.session.add(post)
-        db.session.commit()
-        return redirect(url_for('index'))
-    except:
-        flash('Данные не валидны')
-        return render_template('app/create_post.html', form=form)
+
 
 
 
