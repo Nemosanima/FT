@@ -92,6 +92,13 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField("Регистрация")
 
 
+class ProfileEditForm(FlaskForm):
+    username = StringField("Логин", validators=[DataRequired()])
+    email = StringField("Почта", validators=[DataRequired()])
+    about_myself = TextAreaField("О себе")
+    submit = SubmitField("Изменить")
+
+
 @app.route('/')
 def index():
     posts = Post.query.order_by(Post.created.desc()).all()
@@ -163,6 +170,11 @@ def error_404(error):
     return render_template("errors/404.html"), 404
 
 
+@app.errorhandler(403)
+def error_403(error):
+    return render_template("errors/403.html"), 403
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -228,6 +240,48 @@ def profile(username):
         return render_template('users/profile.html', user=user)
     flash('Пользователь не найден')
     return redirect(url_for('index'))
+
+
+@app.route('/profile/<username>/edit', methods=['GET', 'POST'])
+@login_required
+def profile_edit(username):
+    form = ProfileEditForm()
+    user = User.query.filter_by(username=username).first()
+    if current_user != user:
+        return render_template('errors/403.html'), 403
+    if request.method == 'GET':
+        return render_template('users/profile_edit.html', user=user, form=form)
+    user.username = form.username.data
+    user.email = form.email.data
+    user.about_myself = form.about_myself.data
+    try:
+        flash('Профиль успешно изменен', category='success')
+        db.session.commit()
+        return redirect(url_for("profile", username=user.username))
+    except:
+        flash('Данные не валидны', category='error')
+        return render_template("users/profile_edit.html", form=form, user=user)
+
+
+@app.route('/profile/<username>/delete')
+@login_required
+def profile_delete(username):
+    user = User.query.filter_by(username=username).first()
+    if current_user != user:
+        return render_template('errors/403.html'), 403
+    try:
+        logout_user()
+        db.session.delete(user)
+        db.session.commit()
+        flash('Аккаунт удален')
+        return redirect(url_for("index"))
+    except:
+        flash('Ошибка. Аккаунт не был удален')
+        return redirect(url_for("profile", username=user.username))
+
+
+
+
 
 
 if __name__ == "__main__":

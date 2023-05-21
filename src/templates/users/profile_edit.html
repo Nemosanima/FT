@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Изменить: {{ user.username }}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h3>Изменить профиль</h3>
+  {% for category, message in get_flashed_messages(True) %}
+  {% if category == 'success' %}
+  <div class="alert alert-primary alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% else %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+  {% endfor %}
+  <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      {{ form.username.label(class="form-label") }}
+      {{ form.username(class="form-control", value=user.username) }}
+      <br>
+      {{ form.email.label(class="form-label") }}
+      {{ form.email(class="form-control", value=user.email) }}
+      <br>
+      {{ form.about_myself.label(class="form-label") }}
+      {{ form.about_myself(class="form-control", rows="8", value=user.about_myself) }}
+      <br>
+      {{ form.submit(class="btn btn-primary") }}
+    </form>
+  </div>
+</div>
+{% endblock %}

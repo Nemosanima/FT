@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Недостаточно прав
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h3>У вас недостаточно прав, вернуться на <a href="{{ url_for('index') }}">главную</a> страницу</h3>
+</div>
+{% endblock %}
