@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from wtforms.widgets import TextArea
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from slugify import slugify
 
 # Create flask app
@@ -21,13 +22,22 @@ app.config['SECRET_KEY'] = "my super secret key that no one is supposed to know"
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+# Для аунтификации
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 
 # User model
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
+    username = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    favorite_color = db.Column(db.String(50))
     password_hash = db.Column(db.String(100), nullable=False)
     created = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -63,9 +73,8 @@ class PostForm(FlaskForm):
 
 # UserForm for model User
 class UserForm(FlaskForm):
-    name = StringField("Имя", validators=[DataRequired()])
+    username = StringField("Логин", validators=[DataRequired()])
     email = StringField("Почта", validators=[DataRequired()])
-    favorite_color = StringField("Любимый цвет")
     password_hash = PasswordField(
         'Пароль',
         validators=[DataRequired(), EqualTo('password_hash2', message='Пароли должны совпадать')]
@@ -87,6 +96,12 @@ class PasswordForm(FlaskForm):
     email = StringField("Почта", validators=[DataRequired()])
     password_hash = PasswordField("Пароль", validators=[DataRequired()])
     submit = SubmitField("Отправить")
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Логин', validators=[DataRequired()])
+    password = PasswordField('Пароль', validators=[DataRequired()])
+    submit = SubmitField('Войти')
 
 
 @app.route('/')
@@ -137,6 +152,7 @@ def edit_post(id):
         flash('Данные не валидны')
         return render_template("app/edit_post.html", form=form, post=post)
 
+
 # DeletePost
 @app.route("/posts/<int:id>/delete")
 def delete_post(id):
@@ -181,16 +197,14 @@ def add_user():
             # Хешированный пароль
             hashed_ps = generate_password_hash(form.password_hash.data)
             user = User(
-                name=form.name.data,
+                username=form.username.data,
                 email=form.email.data,
-                favorite_color=form.favorite_color.data,
                 password_hash=hashed_ps
             )
             db.session.add(user)
             db.session.commit()
-        form.name.data = ''
+        form.username.data = ''
         form.email.data = ''
-        form.favorite_color.data = ''
         form.password_hash.data = ''
         flash('Пользователь добавлен в базу данных успешно')
     users = User.query.order_by(User.created)
@@ -204,10 +218,8 @@ def update_user(id):
     form = UserForm()
     user = User.query.get_or_404(id)
     if request.method == 'POST':
-        user.name = request.form.get('name')
+        user.username = request.form.get('username')
         user.email = request.form.get('email')
-        user.favorite_color = request.form.get('favorite_color')
-        #user.password_hash = request.form.get('password_hash')
         try:
             db.session.commit()
             flash('Данные пользователя обновлены')
@@ -233,6 +245,7 @@ def delete_user(id):
 
 
 @app.route('/test_password', methods=['GET', 'POST'])
+@login_required
 def test_password():
     form = PasswordForm()
     if request.method == 'GET':
@@ -241,24 +254,41 @@ def test_password():
     password = request.form.get('password_hash')
     user = User.query.filter_by(email=email).first()
     if user and check_password_hash(user.password_hash, password):
-        user_name = user.name
+        username = user.username
         flash('Проверка пройдена', category='success')
-        return render_template('app/test_password.html', form=form, user_name=user_name)
+        return render_template('app/test_password.html', form=form, username=username)
     else:
         flash('Проверка не пройдена', category='error')
         return render_template('app/test_password.html', form=form)
 
 
-# Json Api
-@app.route('/data')
-def data():
-    dict_data = {
-        'Harry': 'Potter',
-        'Tonny': 'Stark',
-        'Elon': 'Musk',
-        'Stars': ['1EGT', '#YRE', 'GIT']
-    }
-    return dict_data
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if request.method == 'GET':
+        return render_template('users/login.html', form=form)
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user:
+            if check_password_hash(user.password_hash, form.password.data):
+                login_user(user)
+                flash('Авторизация прошла успешно')
+                return redirect(url_for('index'))
+            flash('Неверные пароль, попробуй снова')
+            return render_template('users/login.html', form=form)
+        flash('Неверные логин, попробуй снова')
+        return render_template('users/login.html', form=form)
+    flash('Данные не валидны, попробуй снова')
+    return render_template('users/login.html', form=form)
+
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    flash('Вы вышли из учетной записи успешно')
+    return redirect(url_for('index'))
+
 
 
 

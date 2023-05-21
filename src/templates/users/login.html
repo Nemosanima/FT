@@ -1,29 +1,29 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Обновить пользователя
+Войти
 {% endblock %}
 
 {% block content %}
 <div class="container py-5">
+  <h3>Войти</h3>
   {% for message in get_flashed_messages() %}
-  <div class="alert alert-primary alert-dismissible fade show" role="alert">
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
     {{ message }}
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   {% endfor %}
   <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-    <form method="POST" action="{{ url_for('update_user', id=user.id) }}">
+    <form method="POST">
       {{ form.hidden_tag() }}
       {{ form.username.label(class="form-label") }}
-      {{ form.username(class="form-control", value=user.username) }}
+      {{ form.username(class="form-control") }}
       <br>
-      {{ form.email.label(class="form-label") }}
-      {{ form.email(class="form-control", value=user.email) }}
+      {{ form.password.label(class="form-label") }}
+      {{ form.password(class="form-control") }}
       <br>
       {{ form.submit(class="btn btn-primary") }}
     </form>
   </div>
-  <br>
 </div>
 {% endblock %}

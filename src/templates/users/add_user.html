@@ -15,14 +15,11 @@
   <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
     <form method="POST">
       {{ form.hidden_tag() }}
-      {{ form.name.label(class="form-label") }}
-      {{ form.name(class="form-control") }}
+      {{ form.username.label(class="form-label") }}
+      {{ form.username(class="form-control") }}
       <br>
       {{ form.email.label(class="form-label") }}
       {{ form.email(class="form-control") }}
-      <br>
-      {{ form.favorite_color.label(class="form-label") }}
-      {{ form.favorite_color(class="form-control") }}
       <br>
       {{ form.password_hash.label(class="form-label") }}
       {{ form.password_hash(class="form-control") }}
@@ -38,8 +35,8 @@
     {% for user in users %}
     <tr>
       <td>
-        {{ user.id }} - <a href="{{ url_for('update_user', id=user.id) }}">{{ user.name }}</a> -
-        {{ user.email }} - {{ user.favorite_color}} <a href="{{ url_for('delete_user', id=user.id) }}">Удалить</a>
+        {{ user.id }} - <a href="{{ url_for('update_user', id=user.id) }}">{{ user.username }}</a> -
+        {{ user.email }} -  <a href="{{ url_for('delete_user', id=user.id) }}">Удалить</a>
       </td>
     </tr>
     {% endfor %}
