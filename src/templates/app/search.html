@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Поиск
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h3>Поиск</h3>
+  {% for message in get_flashed_messages() %}
+  <div class="alert alert-primary alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endfor %}
+</div>
+{% for post in posts %}
+<div class="row justify-content-center">
+  <div class="col-md-6 p-5">
+    <div class="card">
+      <div class="card-header">
+        <div style="float: right">
+          {{ post.created.date() }}
+        </div>
+        <h4>
+          {{ post.title }}
+        </h4>
+        <p>
+          <a href="{{ url_for('profile', username=post.author_related.username) }}">{{ post.author_related.username }}</a>
+        </p>
+        <p>
+          {{ post.text }}
+        </p>
+        <a href="{{ url_for('post_detail', id=post.id) }}" class="btn btn-primary">Детали</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from forms import LoginForm, RegistrationForm, PostForm, ProfileEditForm
+from forms import LoginForm, RegistrationForm, PostForm, ProfileEditForm, SearchForm
 
 # Create flask app
 app = Flask(__name__)
@@ -27,6 +27,12 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@app.context_processor
+def base():
+    form = SearchForm()
+    return dict(form=form)
 
 
 @app.route('/')
@@ -209,6 +215,17 @@ def profile_delete(username):
     except:
         flash('Ошибка. Аккаунт не был удален')
         return redirect(url_for("profile", username=user.username))
+
+
+@app.route('/search', methods=['POST'])
+def search():
+    form = SearchForm()
+    posts = Post.query
+    if form.validate_on_submit():
+        form.searched = form.searched.data
+        posts = posts.filter(Post.text.like('%' + form.searched + '%'))
+        posts = posts.order_by(Post.created.desc()).all()
+        return render_template('app/search.html', form=form, posts=posts)
 
 
 class User(db.Model, UserMixin):

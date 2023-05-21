@@ -35,3 +35,8 @@ class ProfileEditForm(FlaskForm):
     email = StringField("Почта", validators=[DataRequired()])
     about_myself = TextAreaField("О себе")
     submit = SubmitField("Изменить")
+
+
+class SearchForm(FlaskForm):
+    searched = StringField("Поиск", validators=[DataRequired()])
+    submit = SubmitField("Найти")
