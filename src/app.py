@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from slugify import slugify
 from forms import LoginForm, RegistrationForm, PostForm, ProfileEditForm
 
 # Create flask app
@@ -50,7 +49,7 @@ def create_post():
         return render_template('app/create_post.html', form=form)
     title = form.title.data
     text = form.text.data
-    post = Post(title=title, text=text)
+    post = Post(title=title, text=text, author=current_user.id)
     try:
         db.session.add(post)
         db.session.commit()
@@ -66,6 +65,8 @@ def create_post():
 def edit_post(id):
     form = PostForm()
     post = Post.query.get_or_404(id)
+    if current_user != post.author_related:
+        return render_template('errors/403.html'),  403
     if request.method == 'GET':
         return render_template('app/edit_post.html', form=form, post=post)
     post.title = request.form["title"]
@@ -83,6 +84,8 @@ def edit_post(id):
 @login_required
 def delete_post(id):
     post = Post.query.get_or_404(id)
+    if current_user != post.author_related:
+        return render_template('errors/403.html'), 403
     try:
         db.session.delete(post)
         db.session.commit()
@@ -214,6 +217,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), nullable=False, unique=True)
     password_hash = db.Column(db.String(100), nullable=False)
     about_myself = db.Column(db.Text)
+    posts = db.relationship('Post', backref='author_related')
     created = db.Column(db.DateTime, default=datetime.utcnow)
 
     @property
@@ -235,6 +239,7 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     text = db.Column(db.Text, nullable=False)
+    author = db.Column(db.Integer, db.ForeignKey('user.id'))
     created = db.Column(db.DateTime, default=datetime.utcnow)
 
 

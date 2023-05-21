@@ -26,6 +26,9 @@
           {{ post.title }}
         </h4>
         <p>
+          <a href="{{ url_for('profile', username=post.author_related.username) }}">{{ post.author_related.username }}</a>
+        </p>
+        <p>
           {{ post.text }}
         </p>
         <a href="{{ url_for('post_detail', id=post.id) }}" class="btn btn-primary">Детали</a>

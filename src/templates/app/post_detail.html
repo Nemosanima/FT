@@ -24,8 +24,10 @@
        <p>
         {{ post.text }}
        </p>
+        {% if current_user == post.author_related %}
         <a href="{{ url_for('edit_post', id=post.id ) }}" class="btn btn-primary">Редактировать</a>
         <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-danger">Удалить</a>
+        {% endif %}
       </div>
     </div>
   </div>
