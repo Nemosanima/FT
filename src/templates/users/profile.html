@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Профиль: {{ user.username }}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+<div class="card col-sm-6">
+  <div class="card-header">
+    <h3>{{ user.username }}</h3>
+  </div>
+  <div class="card-body">
+    <blockquote class="blockquote mb-0">
+      <p>Почта</p>
+      <footer class="blockquote-footer">{{ user.email }}</footer>
+      <p>О себе</p>
+      {% if user.about_myself %}
+      <footer class="blockquote-footer">{{ user.about_myself }}</footer>
+      {% else %}
+      <footer class="blockquote-footer">Пользователь еще ничего не написал про себя</footer>
+      {% endif %}
+    </blockquote>
+  </div>
+</div>
+</div>
+{% endblock %}

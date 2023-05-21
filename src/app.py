@@ -39,6 +39,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(50), nullable=False, unique=True)
     email = db.Column(db.String(100), nullable=False, unique=True)
     password_hash = db.Column(db.String(100), nullable=False)
+    about_myself = db.Column(db.Text)
     created = db.Column(db.DateTime, default=datetime.utcnow)
 
     @property
@@ -118,6 +119,7 @@ def post_detail(id):
 
 # AddPost
 @app.route('/create/post', methods=['GET', 'POST'])
+@login_required
 def create_post():
     form = PostForm()
     if request.method == 'GET':
@@ -137,6 +139,7 @@ def create_post():
 
 # EditPost
 @app.route('/posts/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
 def edit_post(id):
     form = PostForm()
     post = Post.query.get_or_404(id)
@@ -155,6 +158,7 @@ def edit_post(id):
 
 # DeletePost
 @app.route("/posts/<int:id>/delete")
+@login_required
 def delete_post(id):
     post = Post.query.get_or_404(id)
     try:
@@ -290,9 +294,13 @@ def logout():
     return redirect(url_for('index'))
 
 
-
-
-
+@app.route('/profile/<username>')
+def profile(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return render_template('users/profile.html', user=user)
+    flash('Пользователь не найден')
+    return redirect(url_for('index'))
 
 
 
