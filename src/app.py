@@ -1,14 +1,11 @@
 from flask import Flask, render_template, flash, request, redirect, url_for
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, TextAreaField
-from wtforms.validators import DataRequired, EqualTo, Length
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms.widgets import TextArea
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from slugify import slugify
+from forms import LoginForm, RegistrationForm, PostForm, ProfileEditForm
 
 # Create flask app
 app = Flask(__name__)
@@ -33,72 +30,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# User model
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), nullable=False, unique=True)
-    email = db.Column(db.String(100), nullable=False, unique=True)
-    password_hash = db.Column(db.String(100), nullable=False)
-    about_myself = db.Column(db.Text)
-    created = db.Column(db.DateTime, default=datetime.utcnow)
-
-    @property
-    def password(self):
-        raise AttributeError('Получить пароль невозможно')
-
-    @password.setter
-    def password(self, value):
-        self.password_hash = generate_password_hash(value)
-
-    def verify_password(self, value):
-        return check_password_hash(self.password_hash, value)
-
-    def __repr__(self):
-        return '<Name %r>' % self.name
-
-
-# Post model
-class Post(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    text = db.Column(db.Text, nullable=False)
-    created = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-# PostForm
-class PostForm(FlaskForm):
-    title = StringField('Заголовок', validators=[DataRequired()])
-    text = StringField('Текст', validators=[DataRequired()], widget=TextArea())
-    submit = SubmitField("Отправить")
-
-
-class LoginForm(FlaskForm):
-    username = StringField('Логин', validators=[DataRequired()])
-    password = PasswordField('Пароль', validators=[DataRequired()])
-    submit = SubmitField('Войти')
-
-
-class RegistrationForm(FlaskForm):
-    username = StringField("Логин", validators=[DataRequired()])
-    email = StringField("Почта", validators=[DataRequired()])
-    about_myself = TextAreaField("О себе")
-    password = PasswordField(
-        'Пароль',
-        validators=[DataRequired(), EqualTo('password2', message='Пароли должны совпадать')]
-    )
-    password2 = PasswordField(
-        'Повторите пароль', validators=[DataRequired()]
-    )
-    submit = SubmitField("Регистрация")
-
-
-class ProfileEditForm(FlaskForm):
-    username = StringField("Логин", validators=[DataRequired()])
-    email = StringField("Почта", validators=[DataRequired()])
-    about_myself = TextAreaField("О себе")
-    submit = SubmitField("Изменить")
-
-
 @app.route('/')
 def index():
     posts = Post.query.order_by(Post.created.desc()).all()
@@ -111,7 +42,6 @@ def post_detail(id):
     return render_template("app/post_detail.html", post=post)
 
 
-# AddPost
 @app.route('/create/post', methods=['GET', 'POST'])
 @login_required
 def create_post():
@@ -131,7 +61,6 @@ def create_post():
         return render_template('app/create_post.html', form=form)
 
 
-# EditPost
 @app.route('/posts/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_post(id):
@@ -150,7 +79,6 @@ def edit_post(id):
         return render_template("app/edit_post.html", form=form, post=post)
 
 
-# DeletePost
 @app.route("/posts/<int:id>/delete")
 @login_required
 def delete_post(id):
@@ -280,8 +208,34 @@ def profile_delete(username):
         return redirect(url_for("profile", username=user.username))
 
 
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    password_hash = db.Column(db.String(100), nullable=False)
+    about_myself = db.Column(db.Text)
+    created = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def password(self):
+        raise AttributeError('Получить пароль невозможно')
+
+    @password.setter
+    def password(self, value):
+        self.password_hash = generate_password_hash(value)
+
+    def verify_password(self, value):
+        return check_password_hash(self.password_hash, value)
+
+    def __repr__(self):
+        return '<Name %r>' % self.name
 
 
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    created = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 if __name__ == "__main__":

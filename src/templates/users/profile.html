@@ -18,7 +18,7 @@
         {% if user.about_myself %}
         <footer class="blockquote-footer">{{ user.about_myself }}</footer>
         {% else %}
-        <footer class="blockquote-footer">Пользователь еще ничего не написал про себя</footer>
+        <footer class="blockquote-footer">Пока пусто</footer>
         {% endif %}
         {% if current_user == user %}
         <a class="btn btn-primary" href="{{ url_for('profile_edit', username=user.username) }}">Изменить</a>
