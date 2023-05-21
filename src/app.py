@@ -1,6 +1,6 @@
 from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError, TextAreaField
 from wtforms.validators import DataRequired, EqualTo, Length
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
@@ -72,37 +72,24 @@ class PostForm(FlaskForm):
     submit = SubmitField("Отправить")
 
 
-# UserForm for model User
-class UserForm(FlaskForm):
-    username = StringField("Логин", validators=[DataRequired()])
-    email = StringField("Почта", validators=[DataRequired()])
-    password_hash = PasswordField(
-        'Пароль',
-        validators=[DataRequired(), EqualTo('password_hash2', message='Пароли должны совпадать')]
-    )
-    password_hash2 = PasswordField(
-        'Повторите пароль', validators=[DataRequired()]
-    )
-    submit = SubmitField("Отправить")
-
-
-# WTF Form
-class NamerForm(FlaskForm):
-    name = StringField("Имя", validators=[DataRequired()])
-    submit = SubmitField("Отправить")
-
-
-# Test PasswordForm
-class PasswordForm(FlaskForm):
-    email = StringField("Почта", validators=[DataRequired()])
-    password_hash = PasswordField("Пароль", validators=[DataRequired()])
-    submit = SubmitField("Отправить")
-
-
 class LoginForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
     submit = SubmitField('Войти')
+
+
+class RegistrationForm(FlaskForm):
+    username = StringField("Логин", validators=[DataRequired()])
+    email = StringField("Почта", validators=[DataRequired()])
+    about_myself = TextAreaField("О себе")
+    password = PasswordField(
+        'Пароль',
+        validators=[DataRequired(), EqualTo('password2', message='Пароли должны совпадать')]
+    )
+    password2 = PasswordField(
+        'Повторите пароль', validators=[DataRequired()]
+    )
+    submit = SubmitField("Регистрация")
 
 
 @app.route('/')
@@ -176,96 +163,6 @@ def error_404(error):
     return render_template("errors/404.html"), 404
 
 
-# Test WTF Form
-@app.route('/name', methods=['GET', 'POST'])
-def name():
-    name = None
-    form = NamerForm()
-    # Validate Form
-    if form.validate_on_submit():
-        name = form.name.data
-        form.name.data = ''
-        flash('Форма успешно отправлена')
-    return render_template("app/name.html",
-                           name=name,
-                           form=form
-    )
-
-
-@app.route('/user/add', methods=['GET', 'POST'])
-def add_user():
-    form = UserForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user is None:
-            # Хешированный пароль
-            hashed_ps = generate_password_hash(form.password_hash.data)
-            user = User(
-                username=form.username.data,
-                email=form.email.data,
-                password_hash=hashed_ps
-            )
-            db.session.add(user)
-            db.session.commit()
-        form.username.data = ''
-        form.email.data = ''
-        form.password_hash.data = ''
-        flash('Пользователь добавлен в базу данных успешно')
-    users = User.query.order_by(User.created)
-    return render_template("users/add_user.html",
-                           form=form,
-                           users=users)
-
-
-@app.route('/user/<int:id>/update', methods=['GET', 'POST'])
-def update_user(id):
-    form = UserForm()
-    user = User.query.get_or_404(id)
-    if request.method == 'POST':
-        user.username = request.form.get('username')
-        user.email = request.form.get('email')
-        try:
-            db.session.commit()
-            flash('Данные пользователя обновлены')
-            return render_template('users/update_user.html', form=form, user=user)
-        except:
-            flash('Ошибка, попробуй снова')
-            return render_template('users/update_user.html', form=form, user=user)
-    else:
-        return render_template('users/update_user.html', form=form, user=user)
-
-
-@app.route('/user/<int:id>/delete')
-def delete_user(id):
-    user = User.query.get_or_404(id)
-    try:
-        db.session.delete(user)
-        db.session.commit()
-        flash('Пользователь удален')
-        return redirect(url_for('add_user'))
-    except:
-        flash('Ошибка, пользователь не удален')
-        return redirect(url_for('add_user'))
-
-
-@app.route('/test_password', methods=['GET', 'POST'])
-@login_required
-def test_password():
-    form = PasswordForm()
-    if request.method == 'GET':
-        return render_template('app/test_password.html', form=form)
-    email = request.form.get('email')
-    password = request.form.get('password_hash')
-    user = User.query.filter_by(email=email).first()
-    if user and check_password_hash(user.password_hash, password):
-        username = user.username
-        flash('Проверка пройдена', category='success')
-        return render_template('app/test_password.html', form=form, username=username)
-    else:
-        flash('Проверка не пройдена', category='error')
-        return render_template('app/test_password.html', form=form)
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -294,6 +191,36 @@ def logout():
     return redirect(url_for('index'))
 
 
+@app.route('/registration', methods=['GET', 'POST'])
+def registration():
+    form = RegistrationForm()
+    if request.method == 'GET':
+        return render_template('users/registration.html', form=form)
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user:
+            flash('Пользователь с таким логином уже существует')
+            return render_template('users/registration.html', form=form)
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            flash('Пользователь с такой почтой уже существует')
+            return render_template('users/registration.html', form=form)
+        if user is None:
+            hashed_ps = generate_password_hash(form.password.data)
+            user = User(
+                username=form.username.data,
+                email=form.email.data,
+                password_hash=hashed_ps
+            )
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            flash('Вы успешно зарегистрировались')
+            return redirect(url_for('index'))
+    flash('Данные не валидны')
+    return render_template('users/registration.html', form=form)
+
+
 @app.route('/profile/<username>')
 def profile(username):
     user = User.query.filter_by(username=username).first()
@@ -301,7 +228,6 @@ def profile(username):
         return render_template('users/profile.html', user=user)
     flash('Пользователь не найден')
     return redirect(url_for('index'))
-
 
 
 if __name__ == "__main__":

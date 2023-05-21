@@ -1,34 +1,32 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Проверка пользователя
+Регистрация
 {% endblock %}
 
 {% block content %}
 <div class="container py-5">
-  {% for category, message in get_flashed_messages(True) %}
-  {% if category == 'success' %}
-  <div class="alert alert-primary alert-dismissible fade show" role="alert">
-    {{ message }}. Привет {{ username }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-  {% else %}
+  <h3>Регистрация</h3>
+  {% for message in get_flashed_messages() %}
   <div class="alert alert-danger alert-dismissible fade show" role="alert">
     {{ message }}
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
-  {% endif %}
   {% endfor %}
-  <h3>Введите пароль и почту</h3>
-  <br>
   <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
     <form method="POST">
       {{ form.hidden_tag() }}
+      {{ form.username.label(class="form-label") }}
+      {{ form.username(class="form-control") }}
+      <br>
       {{ form.email.label(class="form-label") }}
       {{ form.email(class="form-control") }}
       <br>
-      {{ form.password_hash.label(class="form-label") }}
-      {{ form.password_hash(class="form-control") }}
+      {{ form.password.label(class="form-label") }}
+      {{ form.password(class="form-control") }}
+      <br>
+      {{ form.password2.label(class="form-label") }}
+      {{ form.password2(class="form-control") }}
       <br>
       {{ form.submit(class="btn btn-primary") }}
     </form>
