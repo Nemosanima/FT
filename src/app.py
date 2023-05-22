@@ -223,9 +223,13 @@ def search():
     posts = Post.query
     if form.validate_on_submit():
         form.searched = form.searched.data
-        posts = posts.filter(Post.text.like('%' + form.searched + '%'))
+        posts = posts.filter(Post.text.like('%'.lower() + form.searched.lower() + '%'.lower()))
         posts = posts.order_by(Post.created.desc()).all()
-        return render_template('app/search.html', form=form, posts=posts)
+        if len(posts) > 0:
+            flash('Все, что удалось найти по вашему запросу')
+            return render_template('app/search.html', form=form, posts=posts, searched=form.searched)
+        flash('По вашему запросу нет совпадений')
+        return render_template('app/search.html', form=form, posts=posts, searched=form.searched)
 
 
 @app.route('/admin')
