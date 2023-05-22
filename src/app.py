@@ -206,12 +206,14 @@ def profile_edit(username):
     # set uuid
     picture_name = str(uuid.uuid1()) + "_" + picture_filename
     # Save picture
-    user.profile_picture.save(os.path.join(app.config['UPLOAD_FOLDER'], picture_name))
+    # user.profile_picture.save(os.path.join(app.config['UPLOAD_FOLDER'], picture_name))
     # Change picture into string to save it in db
     user.profile_picture = picture_name
+    saver = request.files['profile_picture']
     try:
         flash('Профиль успешно изменен', category='success')
         db.session.commit()
+        saver.save(os.path.join(app.config['UPLOAD_FOLDER'], picture_name))
         return redirect(url_for("profile", username=user.username))
     except:
         flash('Данные не валидны', category='error')
