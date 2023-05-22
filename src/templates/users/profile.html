@@ -6,45 +6,55 @@
 
 {% block content %}
 <div class="container py-5">
-  <div class="card col-sm-6">
-    <div class="card-header">
-      <h3>{{ user.username }}</h3>
-    </div>
+
+  <div class="card">
+    <h5 class="card-header">{{ user.username }}</h5>
     <div class="card-body">
-      <blockquote class="blockquote mb-0">
-        <p>Почта</p>
-        <footer class="blockquote-footer">{{ user.email }}</footer>
-        <p>О себе</p>
-        {% if user.about_myself %}
-        <footer class="blockquote-footer">{{ user.about_myself }}</footer>
-        {% else %}
-        <footer class="blockquote-footer">Пока пусто</footer>
-        {% endif %}
-        {% if current_user == user %}
-        <a class="btn btn-primary" href="{{ url_for('profile_edit', username=user.username) }}">Изменить</a>
-        <a class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#DeleteProfile">Удалить</a>
-        <!-- Modal -->
-        <div class="modal fade" id="DeleteProfile" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
-             aria-labelledby="DeleteProfileLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h1 class="modal-title fs-5" id="DeleteProfileLabel">Удалить аккаунт</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                Нажмите "удалить" для подтвержения
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                <a type="button" class="btn btn-danger" href="{{ url_for('profile_delete', username=user.username) }}">Удалить</a>
-              </div>
+
+      <div class="row">
+        <div class="col-8">
+      <h5>Почта</h5>
+      <p class="card-text">{{ user.email }}</p>
+      <h5>О себе</h5>
+      {% if user.about_myself %}
+      <p class="card-text">{{ user.about_myself }}</p>
+      {% else %}
+      <p class="card-text">Пока пусто</p>
+      {% endif %}
+      {% if current_user == user %}
+      <a class="btn btn-primary" href="{{ url_for('profile_edit', username=user.username) }}">Изменить</a>
+      <a class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#DeleteProfile">Удалить</a>
+      <div class="modal fade" id="DeleteProfile" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+           aria-labelledby="DeleteProfileLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="DeleteProfileLabel">Удалить аккаунт</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              Нажмите "удалить" для подтвержения
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+              <a type="button" class="btn btn-danger"
+                 href="{{ url_for('profile_delete', username=user.username) }}">Удалить</a>
             </div>
           </div>
         </div>
-        {% endif %}
-      </blockquote>
+      </div>
+      {% endif %}
+          <br>
+          <br>
+          <br>
+        </div>
+        <div class="col-4">
+      <img src="{{ url_for('static', filename='default_images/default_profile_picture.jpg') }}"
+           style="width: 180px; height: 180px", align="right">
+        </div>
+      </div>
     </div>
   </div>
+
 </div>
 {% endblock %}
