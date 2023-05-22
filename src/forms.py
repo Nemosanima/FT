@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo
 from wtforms.widgets import TextArea
+from flask_wtf.file import FileField
 
 
 class PostForm(FlaskForm):
@@ -34,6 +35,7 @@ class ProfileEditForm(FlaskForm):
     username = StringField("Логин", validators=[DataRequired()])
     email = StringField("Почта", validators=[DataRequired()])
     about_myself = TextAreaField("О себе")
+    profile_picture = FileField("Фото профиля")
     submit = SubmitField("Изменить")
 
 

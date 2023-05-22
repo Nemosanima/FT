@@ -5,6 +5,9 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from forms import LoginForm, RegistrationForm, PostForm, ProfileEditForm, SearchForm
+from werkzeug.utils import secure_filename
+import uuid as uuid
+import os
 
 # Create flask app
 app = Flask(__name__)
@@ -14,6 +17,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 # app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:postgres@localhost:5432/libertyhub"
 # Add secret key
 app.config['SECRET_KEY'] = "my super secret key that no one is supposed to know"
+# For pictures
+UPLOAD_FOLDER = 'static/images/'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
 # Создаем базу данных
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -26,7 +34,8 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, user_id)
+    #return User.query.get(int(user_id))
 
 
 @app.context_processor
@@ -191,6 +200,15 @@ def profile_edit(username):
     user.username = form.username.data
     user.email = form.email.data
     user.about_myself = form.about_myself.data
+    user.profile_picture = form.profile_picture.data
+    # image name
+    picture_filename = secure_filename(user.profile_picture.filename)
+    # set uuid
+    picture_name = str(uuid.uuid1()) + "_" + picture_filename
+    # Save picture
+    user.profile_picture.save(os.path.join(app.config['UPLOAD_FOLDER'], picture_name))
+    # Change picture into string to save it in db
+    user.profile_picture = picture_name
     try:
         flash('Профиль успешно изменен', category='success')
         db.session.commit()
@@ -247,6 +265,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), nullable=False, unique=True)
     password_hash = db.Column(db.String(100), nullable=False)
     about_myself = db.Column(db.Text)
+    profile_picture = db.Column(db.String())
     posts = db.relationship('Post', backref='author_related')
     created = db.Column(db.DateTime, default=datetime.utcnow)
 
