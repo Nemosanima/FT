@@ -228,6 +228,15 @@ def search():
         return render_template('app/search.html', form=form, posts=posts)
 
 
+@app.route('/admin')
+@login_required
+def admin():
+    admins = [1, 5, 15]
+    if current_user.id in admins:
+        return render_template('admin/admin.html')
+    return render_template('errors/403.html'), 403
+
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
